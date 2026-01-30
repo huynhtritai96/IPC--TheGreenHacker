@@ -31,6 +31,76 @@ reflect all such changes
 * All routing table entries are uniquely identified by the dest and mask fields and mac list entries identified by mac field
 * The server can flush routing table and mac list at any time, emptying the contents of both data structures, and informs clients to do the same by sending them a USRSIG1 signal.
 
+## Communication Diagram (Init + Socket Flow)
+```
+Client (PID)                         Server
+-----------                          -----------------------------
+socket(AF_UNIX, SOCK_STREAM)         socket(AF_UNIX, SOCK_STREAM)
+connect("NetworkAdminSocket")  --->  bind("NetworkAdminSocket")
+                                     listen()
+                                     accept() -> data_socket
+write(pid)                      --->  read(pid) and store client PID
+
+<initial full state snapshot>   <---  send sync_msg_t + state for RT/ML
+
+Loop:
+Server stdin command (CREATE/UPDATE/DELETE/FLUSH/SHOW)
+  -> update RT/ML + shared memory IP (for MAC)
+  -> send sync_msg_t + "synchronized" flag + "loop" flag
+Client read(sync_msg_t)
+  -> apply to local RT/ML
+  -> optional display
+
+Signals:
+SIGUSR1 (flush)                <---  server sends SIGUSR1 to clients
+SIGINT (shutdown)                    server or client exits cleanly
+```
+
+## Build and Run
+Build both binaries:
+```
+make
+```
+
+Run the server in one terminal:
+```
+./server
+```
+
+Run one or more clients in other terminals:
+```
+./client
+```
+
+Example server inputs:
+```
+CREATE 122.1.1.1 32 10.1.1.1 eth1
+CREATE 130.1.1.1 24 10.1.1.1 eth1
+CREATE 126.30.34.0 24 20.1.1.1 eth2
+CREATE 220.1.0.0 16 30.1.2.3 eth3
+
+CREATE 10.0.0.0 24 10.0.0.1 eth0
+UPDATE 10.0.0.0 24 10.0.0.254 eth0
+DELETE 10.0.0.0 24
+CREATE aa:bb:cc:dd:ee:ff
+DELETE aa:bb:cc:dd:ee:ff
+SHOW
+FLUSH
+```
+Note: when creating a MAC entry, the server prompts for the corresponding IP address to store in shared memory.
+
+## Logging
+To capture server/client output to files:
+```
+./server > server.log 2>&1
+./client > client.log 2>&1
+```
+To also see output live while logging:
+```
+./server | tee server.log
+./client | tee client.log
+```
+
 ## Resources
 * Udemy's "Linux Inter Process Communication (IPC) from Scratch" course by Abhishek Sagar
 

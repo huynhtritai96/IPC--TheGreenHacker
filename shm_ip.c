@@ -13,7 +13,7 @@
 /* Stores IP address in newly created shared memory region corresponding to its key, which is a MAC address. Returns the size of the created shm on success otherwise -1 on failure. */
 int store_IP(const char *mac, const char *ip) {
     size_t size = strlen(ip); // account for terminating null byte
-    int shm_fd = shm_open(mac, O_CREAT | O_RDWR | O_TRUNC, 0660);
+    int shm_fd = shm_open(mac, O_CREAT | O_RDWR | O_TRUNC, 0660); // <-- create shared memory region
     if (shm_fd == -1) {
         printf("Could not create shared memory for MAC %s - IP %s pair\n", mac, ip);
         return -1;

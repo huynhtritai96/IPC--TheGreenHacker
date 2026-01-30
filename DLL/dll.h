@@ -2,13 +2,13 @@
 #define DLL_H
 
 /* Data structure definitions for generic circular doubly linked list */
-typedef struct dll_node_ {
+typedef struct dll_node_ { // <-- node structure
     void *data;
     struct dll_node_ *next;
     struct dll_node_ *prev;
 } dll_node_t;
 
-typedef struct dll_{
+typedef struct dll_{ // <-- main DLL structure
     dll_node_t *head;
     dll_node_t *tail;
 } dll_t;
